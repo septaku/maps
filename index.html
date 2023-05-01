@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hitung Biaya Ongkos Kirim</title>
+    <style>
+      #map {
+        height: 500px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body onload="initMap()">
+    <h1>Hitung Biaya Ongkos Kirim</h1>
+    <div id="map"></div>
+    <br>
+    <label for="alamat">Alamat Pengiriman:</label>
+    <input type="text" id="alamat" name="alamat"><br><br>
+    <input type="button" value="Hitung" onclick="hitungOngkir()">
+    <br>
+    <br>
+    <div id="hasil"></div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeLKmlSgPHmdqCLP_kpCGqcEQCEncBue4"></script>
+    <script>
+      var map;
+      var marker;
+      var penjual = new google.maps.LatLng(-7.277141, 112.795201);
+      var pengirim;
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: -7.277141, lng: 112.795201},
+          zoom: 15
+        });
+
+        marker = new google.maps.Marker({
+          position: penjual,
+          map: map,
+          title: "Penjual"
+        });
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            pengirim = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+            marker = new google.maps.Marker({
+              position: pengirim,
+              map: map,
+              title: "Pengirim"
+            });
+
+            map.setCenter(pengirim);
+          });
+        } else {
+          alert("Maaf, browser Anda tidak mendukung geolocation!");
+        }
+      }
+
+      function hitungOngkir() {
+        var alamat = document.getElementById("alamat").value;
+
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode({"address": alamat}, function(results, status) {
+          if (status == google.maps.GeocoderStatus.OK) {
+            pengirim = results[0].geometry.location;
+
+            marker = new google.maps.Marker({
+              position: pengirim,
+              map: map,
+              title: "Pengirim"
+            });
+
+            var jarak = hitungJarak(penjual, pengirim);
+            var biaya = jarak * 1000;
+
+            document.getElementById("hasil").innerHTML = "Jarak: " + jarak.toFixed(2) + " KM<br>Biaya: Rp " + biaya.toLocaleString();
+          } else {
+            alert("Maaf, alamat yang Anda masukkan tidak ditemukan!");
+          }
+        });
+      }
+
+      function hitungJarak(penjual, pengirim) {
+        var R = 6371; // radius bumi dalam kilometer
+        var dLat = deg2rad(pengirim.lat() - penjual.lat());
+        var dLon = deg2rad(pengirim.lng() - penjual.lng());
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(penjual.lat())) * Math.cos(deg2rad(pengirim.lat())) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        var d = R * c; // jarak dalam kilometer
+        return d;
+      }
+      function deg2rad(deg) {
+    return deg * (Math.PI/180);
+  }
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeLKmlSgPHmdqCLP_kpCGqcEQCEncBue4&callback=initMap"></script>
+  </body>
+</html>
